@@ -1,0 +1,120 @@
+SCENARIO - 1
+
+You are designing the database for a food delivery application. It stores restaurant
+details, menu items linked to each restaurant, and customer orders. You must decide
+which columns need NOT NULL constraints, which serve as PRIMARY KEYs, and which link
+tables via FOREIGN KEYs.
+
+Question: Justify your constraint choices for at least three columns across two tables. What
+data integrity problems would arise if these constraints were not applied?
+
+Answer:
+
+In the food delivery database, I would use restaurant_id as the primary key in the restaurants table because every restaurant should have a unique ID. I would use restaurant_id as a foreign key in the menu_items table because each menu item must belong to an existing restaurant. I would also keep name and item_name as NOT NULL because a restaurant or menu item should not be saved without a name.
+
+Without these constraints, duplicate restaurant IDs could be entered, menu items could be linked to restaurants that do not exist, and important fields could be left empty. This would make the database data incorrect and difficult to manage.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SCENARIO - 2
+
+You are managing the database for a food delivery platform. The operations team asks
+you to update the status of all orders placed more than 7 days ago that are still marked
+'Pending' to 'Cancelled', and to permanently delete menu items marked 'Unavailable'
+from restaurants that have closed.
+
+Question: Explain why the WHERE clause is essential in each DML statement. What could go
+wrong with an UPDATE or DELETE executed without a proper WHERE condition?
+
+Answer:
+
+The WHERE clause is important because it tells the database which particular records should be updated or deleted. In this case, it makes sure that only orders older than 7 days with status 'Pending' are changed to 'Cancelled', and only unavailable menu items from closed restaurants are deleted.
+
+If UPDATE is used without a proper WHERE condition, it could change the status of all orders, including recent orders. Similarly, DELETE without a WHERE condition could remove all menu items from the table. Therefore, the WHERE clause helps prevent unwanted changes and accidental data loss.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SCENARIO - 3
+You are building a revenue dashboard for a food delivery startup. The management wants total revenue, average order value, and number of orders per restaurant — but only for restaurants that have processed more than 20 orders in the current month.
+
+Question: Which SQL clauses and aggregate functions would you use to produce this report? Explain why HAVING must be used here rather than WHERE to filter by aggregate results.
+
+Answer:
+
+I would use count(), sum(), and avg() with where, group by, and having.
+
+select
+    restaurant_id,
+    count(order_id) as total_orders,
+    sum(total_amount) as total_revenue,
+    avg(total_amount) as average_order_value
+from orders
+where month(order_date) = month(current_date)
+group by restaurant_id
+having count(order_id) > 20;
+
+where filters individual orders before grouping, while having filters groups after count() is calculated. Therefore, having is used for the condition count(order_id) > 20.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SCENARIO - 4
+You are developing an order history page. The orders table has order_id, customer_id,restaurant_id, and total_amount. The restaurants table has restaurant_id and name.The page must show order ID, restaurant name, and amount for every order — including any that reference a restaurant no longer in the table.
+
+Question: Compare INNER JOIN and LEFT JOIN for this query. Which would you use and why? Describe what each join type does to records that have no match in the other table.
+
+Answer:
+
+INNER JOIN returns only orders that have a matching restaurant in the restaurants table.
+
+LEFT JOIN returns all orders, even if the restaurant is no longer present. If there is no matching restaurant, the restaurant name will show as null.
+
+I would use LEFT JOIN because the page must show every order, including orders whose restaurant record is missing.
+
+select o.order_id, r.name as restaurant_name, o.total_amount
+from orders o
+left join restaurants r
+on o.restaurant_id = r.restaurant_id;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SCENARIO - 5
+You are building the analytics layer for a food delivery platform. A senior developer proposes a VIEW called top_restaurants showing restaurant name, total orders, and average rating — hiding raw ID columns from the front-end team.
+
+Question: Justify why a VIEW is preferred over direct table access here. What are two limitations the front-end developer should be aware of when working with this VIEW?
+
+Answer:
+
+A VIEW is preferred because it shows only the required data to the front-end team and hides unnecessary columns like raw IDs. It also makes the data easier and safer to access.
+
+Two limitations are:
+1. The developer can only access columns included in the view.
+2. A complex view with joins or calculations may be slower than accessing a simple table directly.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SCENARIO - 6
+
+You are implementing the payment module for a food delivery app. When a customer places an order, the system must deduct the amount from the customer's wallet balance and record the payment simultaneously. During load testing, the wallet deduction completes but the payment record insert occasionally fails, leaving balances inconsistent.
+
+Question: Which database mechanism should have prevented this inconsistency? Explain how COMMIT, ROLLBACK, and SAVEPOINT work together to ensure both operations succeed or neither takes effect.
+
+Answer:
+
+The inconsistency should be prevented by using a transaction.
+
+- COMMIT permanently saves both the wallet deduction and payment record.
+- ROLLBACK cancels all changes if any operation fails.
+- SAVEPOINT creates a temporary point to which we can roll back within a transaction.
+
+For example:
+
+start transaction;
+
+update customers
+set balance = balance - 500
+where customer_id = 1;
+
+insert into payments(customer_id, amount)
+values (1, 500);
+
+commit;
+
+If the payment insert fails, rollback should be used instead of commit. This ensures that the wallet deduction is also cancelled, so both operations succeed together or neither takes effect.
+
+
+

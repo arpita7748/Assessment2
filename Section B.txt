@@ -1,0 +1,166 @@
+Task 1: Design and Populate a Restaurant Database
+
+1.Create a database named foodapp_db and a table named restaurants with columns:restaurant_id (INT, AUTO_INCREMENT, PRIMARY KEY), name (VARCHAR, NOT NULL), city(VARCHAR), cuisine_type (VARCHAR), and rating (DECIMAL(3,1)).
+
+create database foodapp_db;
+
+use foodapp_db;
+create table restaurants(
+	restaurant_id int primary key auto_increment,
+    name varchar(100) not null,
+    city varchar(50),
+    cuisine_type varchar(50),
+    rating decimal(3,1)
+    );
+
+2.Insert at least 6 restaurant records spanning at least 3 different cities.
+
+insert into restaurants(name,city,cuisine_type,rating)
+  values
+('Spice Garden', 'Ahmedabad', 'Indian', 4.5),
+('The Food House', 'Ahmedabad', 'Chinese', 4.2),
+('Royal Taste', 'Gandhinagar', 'Punjabi', 4.6),
+('Green Leaf', 'Vadodara', 'South Indian', 4.1),
+('Pizza Corner', 'Surat', 'Italian', 4.3),
+('Urban Bites', 'Surat', 'Fast Food', 4.0);
+
+3.Update the rating of one restaurant and delete one restaurant record using a WHERE condition.
+
+update restaurants set rating=4.7 where restaurant_id=1;
+
+delete from restaurants where restaurant_id=6;
+
+4.Write a SELECT query that retrieves all restaurants sorted by rating in descending order.
+
+select * from restaurants order by rating desc;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Task 2: Aggregate Revenue Reporting on Orders
+
+1.Create an orders table with columns: order_id, restaurant_id, customer_name, total_amount,and order_date. Insert at least 12 orders distributed across at least 4 restaurants.
+
+create table orders(
+    order_id int primary key auto_increment,
+    restaurant_id int,
+    customer_name varchar(100),
+    total_amount decimal(10,2),
+    order_date date,
+    foreign key (restaurant_id) references restaurants(restaurant_id)
+);
+
+insert into orders(restaurant_id,customer_name,total_amount,order_date)
+values
+(1, 'Rahul', 1200.00, '2026-09-20'),
+(2, 'Priya', 2500.00, '2026-09-21'),
+(3, 'Amit', 1800.00, '2026-09-22'),
+(4, 'Neha', 3200.00, '2026-09-23'),
+(1, 'Karan', 2000.00, '2026-09-24'),
+(2, 'Riya', 1500.00, '2026-09-25'),
+(3, 'Jay', 2800.00, '2026-09-26'),
+(4, 'Meera', 2200.00, '2026-09-27'),
+(1, 'Ankit', 2500.00, '2026-09-28'),
+(2, 'Pooja', 3000.00, '2026-09-29'),
+(3, 'Vishal', 1900.00, '2026-09-30'),
+(4, 'Sneha', 1700.00, '2026-10-01');
+
+2.Write a query to show total revenue and average order value per restaurant.
+
+select r.restaurant_id,r.name,sum(o.total_amount) as total_revenue,
+avg(o.total_amount) as avg_order_value from restaurants r
+join orders o on r.restaurant_id=o.restaurant_id
+group by r.restaurant_id,r.name;
+
+3.Write a query using HAVING to list only restaurants whose total revenue exceeds Rs 5,000.
+
+select r.name,sum(o.total_amount) as total_avenue from
+restaurants r join orders o on r.restaurant_id=o.restaurant_id
+group by r.restaurant_id,r.name 
+having sum(o.total_amount)>5000;
+
+4.Write a query to retrieve the 5 most recent orders using ORDER BY and LIMIT.
+
+select * from orders order by order_date desc limit 5;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Task 3: Multi-Table JOINs and Menu Summary View
+
+1.Create two tables: restaurants (restaurant_id, name, city) and menu_items (item_id,restaurant_id, item_name, price, category). Link them with a FOREIGN KEY on restaurant_id.
+
+create table restaurant
+    restaurant_id int primary key auto_increment,
+    name varchar(100) not null,
+    city varchar(100)
+);
+
+create table menu_items(
+    item_id int primary key auto_increment,
+    restaurant_id int,
+    item_name varchar(100),
+    price decimal(10,2),
+    category varchar(50),
+    foreign key (restaurant_id) references restaurants(restaurant_id)
+);
+
+2.Insert at least 5 restaurants and 12 menu items; at least one restaurant must have no menuitems.
+
+insert into menu_items
+(restaurant_id,item_name,price,category) values
+(1, 'Paneer Tikka', 250.00, 'Starter'),
+(1, 'Butter Naan', 80.00, 'Bread'),
+(1, 'Dal Tadka', 180.00, 'Main Course'),
+
+(2, 'Chole Bhature', 200.00, 'Main Course'),
+(2, 'Paneer Masala', 280.00, 'Main Course'),
+(2, 'Lassi', 100.00, 'Beverage'),
+
+(3, 'Masala Dosa', 150.00, 'South Indian'),
+(3, 'Idli Sambar', 120.00, 'South Indian'),
+
+(4, 'Margherita Pizza', 350.00, 'Pizza'),
+(4, 'Farmhouse Pizza', 450.00, 'Pizza'),
+(4, 'Garlic Bread', 180.00, 'Starter'),
+(4, 'Cold Drink', 80.00, 'Beverage');
+
+3.Write an INNER JOIN query listing restaurant name, item name, and price for all available items.
+
+select r.name,m.item_name,m.price from restaurants r
+inner join menu_items m on r.restaurant_id=m.restaurant_id;
+
+4.Write a LEFT JOIN query so that restaurants with no items also appear in results, with NULLvalues in item columns.
+
+select r.name,m.item_name,m.price from restaurants r left join
+menu_items m on r.restaurant_id=m.restaurant_id;
+
+5.Create a VIEW named restaurant_menu_summary showing restaurant name, total number ofmenu items, and average item price grouped by restaurant.
+
+create view restaurant_menu_summry as
+select r.name as restaurant_name,
+count(m.item_id),avg(m.price)
+from restaurants r left join menu_items m
+on r.restaurant_id=m.restaurant_id
+group by r.restaurant_id,r.name;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Task 4: PL/SQL Order Placement Procedure
+
+1.Create a stored procedure named place_order that accepts customer_id, restaurant_id, andamount as parameters.
+
+2.Deduct the amount from the customer's wallet_balance in a customers table and insert a newrecord into the orders table.
+
+3.Use a transaction block: if the customer's wallet_balance is insufficient, ROLLBACK everything;otherwise COMMIT.
+
+4.Test with a valid order and an order exceeding wallet balance. Screenshot both outcomesfrom MySQL Workbench.
+
+with valid order:
+
+call place_order(1, 1, 1000.00);
+
+select * from customers where customer_id = 1;
+
+with excedding wallet balance:
+call place_order(1, 1, 6000.00);
+
+select * from customers
+where customer_id = 1;
+
+
